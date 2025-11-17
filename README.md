@@ -12,14 +12,12 @@ BOM
 
 The MAX98357A pins are LRC-BCLK-DIN-GAIN-SD-GND-V1N
 
-GPT suggests 
-
-| ESP32 pin | MAX pin    | Purpose                     |
-| --------- | ---------- | --------------------------- |
-| GPIO25    | (1)LRC     | I²S Word Select             |
-| GPIO26    | (2)BCLK    | I²S Bit Clock               |
-| GPIO27    | (3)DIN     | I²S Data Out                |
-| GPIO14    | (4)GAIN    | leave unconnected or ignore |
-| GPIO13    | (5)SD      | Enable/Shutdown control     |
-| GND       | (6)GND     | Ground                      |
-| VIN       | (7)VIN     | 5V to power amp             |
+| ESP32 pin | MAX pin    | Colour | Purpose                     |
+| --------- | ---------- | ------ | --------------------------- |
+| GPIO25    | (1)LRC     | GREY   | I²S Word Select             |
+| GPIO26    | (2)BCLK    | WHITE  | I²S Bit Clock               |
+| GPIO27    | (3)DIN     | BLACK  | I²S Data Out                |
+| GPIO14    | (4)GAIN    | BROWN  | leave unconnected or ignore |
+| GPIO13    | (5)SD      | RED    | Enable/Shutdown control     |
+| GND       | (6)GND     | ORANGE | Ground                      |
+| VIN       | (7)VIN     | YELLOW | 5V to power amp             |
