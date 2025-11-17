@@ -18,6 +18,10 @@ int16_t sampleBuffer[BUFFER_SIZE];
 void setup() {
   Serial.begin(115200);
 
+  // Enable amplifier
+  pinMode(13, OUTPUT);
+  digitalWrite(13, HIGH);
+
   // Setup LED pin
   pinMode(LED_PIN, OUTPUT);
 
