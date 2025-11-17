@@ -3,10 +3,11 @@ Plays back random audio samples using an esp32, MAX98357A amp and a speaker.
 
 BOM
 
-| Part | Purpose                     |
-| NodeMcu ESP32 WROOM-32 Type C CH340C | ESP32 brains of the operation development Board                     |
-| MAX98357A | Amplifier to drive speaker                     |
-| LM2596 | DC-DC Buck converter for Battery to 5v                     |
+| Part                                 | Purpose                                         |
+| ------------------------------------ | ----------------------------------------------- |
+| NodeMcu ESP32 WROOM-32 Type C CH340C | ESP32 brains of the operation development Board |
+| MAX98357A                            | Amplifier to drive speaker                      |
+| LM2596                               | DC-DC Buck converter for Battery to 5v          |
 
 
 The MAX98357A pins are LRC-BCLK-DIN-GAIN-SD-GND-V1N
