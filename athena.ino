@@ -3,7 +3,7 @@
 // I2S pins
 #define I2S_WS   25  // LRC
 #define I2S_BCLK 26  // BCLK
-#define I2S_DOUT 22  // DIN
+#define I2S_DOUT 27  // DIN
 
 // LED pin
 #define LED_PIN 2    // On-board LED (adjust if external)
