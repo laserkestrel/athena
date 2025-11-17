@@ -1,5 +1,6 @@
 # athena
-Plays back random audio samples using an esp32, MAX98357A amp and a speaker.
+Plays back random audio samples using an esp32, MAX98357A amp and a 4 ohm, 3w speaker.
+Currently powered by an LM2596 set to output 5v. (input power 6x AA NiMh battery pack)
 
 BOM
 
