@@ -12,6 +12,7 @@ Will require a low fidelity wav or mp3 inserting into ESP32 memory as we have no
 | MAX98357A                            | Amplifier to drive speaker                      |
 | LM2596                               | DC-DC Buck converter for Battery to 5v          |
 | 6x Energiser Recharge AA 1300mAh     | Power                                           |
+| 40mm 4ohm 3W speaker                 | Produce output                                  |
 
 
 The MAX98357A pins are LRC-BCLK-DIN-GAIN-SD-GND-V1N
