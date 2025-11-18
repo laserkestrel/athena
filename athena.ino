@@ -1,77 +1,126 @@
 #include <Arduino.h>
-#include "driver/i2s.h"
-#include <math.h>
+#include <driver/i2s.h>
+#include "audio_data.h"   // Your header with ath01...ath11
 
-// I2S pins
-#define I2S_WS   25   // LRC
-#define I2S_BCLK 26   // BCLK
-#define I2S_DOUT 27   // DIN
-#define SD_PIN   13   // MAX98357A shutdown (active HIGH)
+// ---------------------------------------------------------------------------
+// I²S pin definitions (matches your wiring)
+// ---------------------------------------------------------------------------
+#define I2S_BCLK 26
+#define I2S_LRC  25
+#define I2S_DOUT 27
+#define AMP_SD   13
 
-// LED pin
-#define LED_PIN 2     // On-board LED
+// ---------------------------------------------------------------------------
+// AUDIO PLAYBACK SETTINGS
+// ---------------------------------------------------------------------------
+#define SAMPLE_RATE 16000      // Set to 8000 if your WAVs are 8 kHz
+#define PHRASE_INTERVAL 60000  // 60,000 ms = 1 minute
 
-// Audio parameters
-#define SAMPLE_RATE 16000   // 16 kHz sample rate
-#define AMPLITUDE 1000      // Sine wave amplitude
-#define TONE_FREQ 440       // Frequency of sine wave (Hz)
-#define BUFFER_SIZE 512     // Samples per buffer
+// ---------------------------------------------------------------------------
+// Lookup table of all phrases
+// (Keep this in the same order they should be played)
+// ---------------------------------------------------------------------------
+struct Sound {
+    const int16_t* data;
+    size_t length;
+};
 
-int16_t sampleBuffer[BUFFER_SIZE * 2]; // Stereo interleaved buffer
+Sound sounds[] = {
+    { ath01, ath01_len },
+    { ath02, ath02_len },
+    { ath03, ath03_len },
+    { ath04, ath04_len },
+    { ath05, ath05_len },
+    { ath06, ath06_len },
+    { ath07, ath07_len },
+    { ath08, ath08_len },
+    { ath09, ath09_len },
+    { ath10, ath10_len },
+    { ath11, ath11_len }
+};
 
-void setup() {
-  Serial.begin(115200);
+const int NUM_SOUNDS = sizeof(sounds) / sizeof(Sound);
+int currentSound = 0;
 
-  // Enable MAX98357A
-  pinMode(SD_PIN, OUTPUT);
-  digitalWrite(SD_PIN, HIGH);  // enable amplifier
+// ---------------------------------------------------------------------------
+// INITIALISE I²S
+// ---------------------------------------------------------------------------
+void setupI2S() {
+    i2s_config_t i2s_config = {
+        .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
+        .sample_rate = SAMPLE_RATE,
+        .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
+        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
+        .communication_format = I2S_COMM_FORMAT_I2S,
+        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
+        .dma_buf_count = 8,
+        .dma_buf_len = 1024,
+        .use_apll = false,
+        .tx_desc_auto_clear = true,
+        .fixed_mclk = 0
+    };
 
-  // Setup LED pin
-  pinMode(LED_PIN, OUTPUT);
+    i2s_pin_config_t pin_config = {
+        .bck_io_num = I2S_BCLK,
+        .ws_io_num = I2S_LRC,
+        .data_out_num = I2S_DOUT,
+        .data_in_num = -1
+    };
 
-  // Setup I2S
-  i2s_config_t i2s_config = {
-      .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
-      .sample_rate = SAMPLE_RATE,
-      .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
-      .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-      .communication_format = I2S_COMM_FORMAT_I2S,
-      .intr_alloc_flags = 0,
-      .dma_buf_count = 4,
-      .dma_buf_len = 512,
-      .use_apll = false
-  };
-
-  i2s_pin_config_t pin_config = {
-      .bck_io_num = I2S_BCLK,
-      .ws_io_num = I2S_WS,
-      .data_out_num = I2S_DOUT,
-      .data_in_num = I2S_PIN_NO_CHANGE
-  };
-
-  i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
-  i2s_set_pin(I2S_NUM_0, &pin_config);
-
-  // Precompute sine wave buffer (stereo interleaved)
-  for (int i = 0; i < BUFFER_SIZE; i++) {
-    int16_t sample = AMPLITUDE * sin(2 * PI * TONE_FREQ * i / SAMPLE_RATE);
-    sampleBuffer[i * 2]     = sample;  // left
-    sampleBuffer[i * 2 + 1] = sample;  // right
-  }
+    i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
+    i2s_set_pin(I2S_NUM_0, &pin_config);
 }
 
-void loop() {
-  // Send sine wave buffer via I2S
-  size_t bytesWritten;
-  i2s_write(I2S_NUM_0, sampleBuffer, sizeof(sampleBuffer), &bytesWritten, portMAX_DELAY);
+// ---------------------------------------------------------------------------
+// PLAY A PHRASE
+// ---------------------------------------------------------------------------
+void playSound(int index) {
+    if (index < 0 || index >= NUM_SOUNDS) return;
 
-  // LED breathing effect
-  for (int i = 0; i <= 255; i++) {      // Brighten
-    analogWrite(LED_PIN, i);
-    delay(5);
-  }
-  for (int i = 255; i >= 0; i--) {      // Dim
-    analogWrite(LED_PIN, i);
-    delay(5);
-  }
+    size_t written;
+    i2s_write(I2S_NUM_0, sounds[index].data, sounds[index].length,
+              &written, portMAX_DELAY);
+}
+
+// ---------------------------------------------------------------------------
+// SETUP
+// ---------------------------------------------------------------------------
+unsigned long lastSpeakTime = 0;
+
+void setup() {
+    Serial.begin(115200);
+
+    pinMode(AMP_SD, OUTPUT);
+    digitalWrite(AMP_SD, HIGH);
+
+    setupI2S();
+
+    // Athena says her first line right away
+    playSound(currentSound);
+    currentSound++;
+    if (currentSound >= NUM_SOUNDS) currentSound = 0;
+
+    lastSpeakTime = millis();  // next line in 1 minute
+}
+
+// ---------------------------------------------------------------------------
+// MAIN LOOP — Athena speaks every 1 minute
+// ---------------------------------------------------------------------------
+void loop() {
+
+    unsigned long now = millis();
+    
+    if (now - lastSpeakTime >= PHRASE_INTERVAL) {
+        lastSpeakTime = now;
+
+        Serial.print("Playing phrase: ");
+        Serial.println(currentSound + 1);
+
+        playSound(currentSound);
+
+        currentSound++;
+        if (currentSound >= NUM_SOUNDS) {
+            currentSound = 0; // wrap around
+        }
+    }
 }
