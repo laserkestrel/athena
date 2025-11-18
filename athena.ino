@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <cstddef>
 #include <driver/i2s.h>
 #include "audio_data.h"   // Your header with ath01...ath11
 
@@ -30,12 +31,8 @@ Sound sounds[] = {
     { ath02, ath02_len },
     { ath03, ath03_len },
     { ath04, ath04_len },
-    { ath05, ath05_len },
-    { ath06, ath06_len },
     { ath07, ath07_len },
-    { ath08, ath08_len },
     { ath09, ath09_len },
-    { ath10, ath10_len },
     { ath11, ath11_len }
 };
 
@@ -77,10 +74,27 @@ void setupI2S() {
 void playSound(int index) {
     if (index < 0 || index >= NUM_SOUNDS) return;
 
-    size_t written;
-    i2s_write(I2S_NUM_0, sounds[index].data, sounds[index].length,
-              &written, portMAX_DELAY);
+    const int16_t* soundData = sounds[index].data;
+    size_t totalBytes = sounds[index].length;
+
+    const size_t CHUNK_SAMPLES = 1024;
+    int16_t buffer[CHUNK_SAMPLES];
+
+    size_t samples = totalBytes / sizeof(int16_t);
+
+    for (size_t i = 0; i < samples; i += CHUNK_SAMPLES) {
+        size_t chunk = (i + CHUNK_SAMPLES <= samples) ? CHUNK_SAMPLES : (samples - i);
+
+        // Copy from flash to RAM buffer
+        for (size_t j = 0; j < chunk; j++) {
+            buffer[j] = pgm_read_word(&soundData[i + j]);
+        }
+
+        size_t written;
+        i2s_write(I2S_NUM_0, buffer, chunk * sizeof(int16_t), &written, portMAX_DELAY);
+    }
 }
+
 
 // ---------------------------------------------------------------------------
 // SETUP
