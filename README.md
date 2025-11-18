@@ -1,14 +1,17 @@
 # athena
-Plays back random audio samples using an esp32, MAX98357A amp and a 4 ohm, 3w speaker.
+Intended to play back audio samples periodically using an esp32, MAX98357A amp and a 4 ohm, 3w speaker.
 Currently powered by an LM2596 set to output 5v. (input power 6x AA NiMh battery pack)
 
-BOM
+Will require a low fidelity wav or mp3 inserting into ESP32 memory as we have no SDCARD reader. (nor requirement for one)
+
+# BOM
 
 | Part                                 | Purpose                                         |
 | ------------------------------------ | ----------------------------------------------- |
 | NodeMcu ESP32 WROOM-32 Type C CH340C | ESP32 brains of the operation development Board |
 | MAX98357A                            | Amplifier to drive speaker                      |
 | LM2596                               | DC-DC Buck converter for Battery to 5v          |
+| 6x Energiser Recharge AA 1300mAh     | Power                                           |
 
 
 The MAX98357A pins are LRC-BCLK-DIN-GAIN-SD-GND-V1N
