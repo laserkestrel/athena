@@ -68,31 +68,41 @@ void setupI2S() {
     i2s_set_pin(I2S_NUM_0, &pin_config);
 }
 
-// ---------------------------------------------------------------------------
-// PLAY A PHRASE
-// ---------------------------------------------------------------------------
 void playSound(int index) {
     if (index < 0 || index >= NUM_SOUNDS) return;
 
     const int16_t* soundData = sounds[index].data;
     size_t totalBytes = sounds[index].length;
+    size_t samples = totalBytes / sizeof(int16_t);
 
     const size_t CHUNK_SAMPLES = 1024;
     int16_t buffer[CHUNK_SAMPLES];
 
-    size_t samples = totalBytes / sizeof(int16_t);
+    // Wake amplifier
+    digitalWrite(AMP_SD, HIGH);
+    delay(5); // let amp settle
 
+    size_t written;
+
+    // Optional short pre-roll silence
+    const size_t SILENCE_SAMPLES = 128;
+    for (size_t i = 0; i < SILENCE_SAMPLES; i++) buffer[i] = 0;
+    i2s_write(I2S_NUM_0, buffer, SILENCE_SAMPLES * sizeof(int16_t), &written, portMAX_DELAY);
+
+    // Play audio in chunks
     for (size_t i = 0; i < samples; i += CHUNK_SAMPLES) {
         size_t chunk = (i + CHUNK_SAMPLES <= samples) ? CHUNK_SAMPLES : (samples - i);
-
-        // Copy from flash to RAM buffer
-        for (size_t j = 0; j < chunk; j++) {
+        for (size_t j = 0; j < chunk; j++)
             buffer[j] = pgm_read_word(&soundData[i + j]);
-        }
 
-        size_t written;
         i2s_write(I2S_NUM_0, buffer, chunk * sizeof(int16_t), &written, portMAX_DELAY);
     }
+
+    // Keep amp on to ensure full tail
+    delay(10000);
+
+    // Sleep amplifier
+    digitalWrite(AMP_SD, LOW);
 }
 
 
