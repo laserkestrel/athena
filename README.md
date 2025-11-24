@@ -1,8 +1,13 @@
-# athena
-Intended to play back audio samples periodically using an esp32, MAX98357A amp and a 4 ohm, 3w speaker.
+# Athena
+Intended to play back audio samples periodically using an esp32, MAX98357A amp and a small speaker.
 Currently powered by an LM2596 set to output 5v. (input power 6x AA NiMh battery pack)
 
-Will require a low fidelity wav or mp3 inserting into ESP32 memory as we have no SDCARD reader. (nor requirement for one)
+Wav data is encoded into binary and stored in the ESP's memory, rather than adding SD card. 
+
+Current enhancements would be to produce a clock which announces the hour betweeen daylight waking time. 
+Addition of RTC module.
+Would not want any buttons on the device, so setup via wifi captive portal? 
+Battery between the various boards must be shared, and rechargeable via USB-C.
 
 # BOM
 
