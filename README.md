@@ -35,8 +35,12 @@ A single battery between the various boards must be shared, and rechargeable via
 | GPIO27    | (3)DIN     | MAX98357A   | BLACK        | I²S Data Out                |
 | GPIO14    | (4)GAIN    | MAX98357A   | BROWN        | leave unconnected or ignore |
 | GPIO13    | (5)SD      | MAX98357A   | RED          | Enable/Shutdown control     |
-| GND       | (6)GND     | MAX98357A   | ORANGE       | Ground                      |
-| VIN       | (7)VIN     | MAX98357A   | YELLOW       | 5V to power amp             |
+| Not used  | (6)GND     | MAX98357A   | ORANGE       | Common Ground for Amp       |
+| Not used  | (7)VIN     | MAX98357A   | YELLOW       | 5V to power amp             |
+| VIN       | OUT+       | LM2596      | WHITE        | Variable + output           |
+| GND       | OUT-       | LM2596      | BLACK        | Common Ground for ESP32     |
+| Not used  | IN+        | LM2596      | RED          | Bat +                       |
+| Not used  | IN-        | LM2596      | BROWN        | Bat -                       |
 
 # Unused pins info on DS3231
 
