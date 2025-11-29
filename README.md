@@ -42,6 +42,9 @@ A single battery between the various boards must be shared, and rechargeable via
 | Not used  | IN+        | LM2596      | RED          | Bat +                       |
 | Not used  | IN-        | LM2596      | BROWN        | Bat -                       |
 
+The ESP VIN pin can be bypassed and instead use the 3v3 pin as long as the ESP and other components are all fed 3.3v by the LM2596.
+This should be more power efficent. 
+
 # Unused pins info on DS3231
 
 | DS3231 pin | TBC | Colour | Purpose                                      |
