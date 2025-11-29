@@ -4,10 +4,11 @@ Currently powered by an LM2596 set to output 5v. (input power 6x AA NiMh battery
 
 Wav data is encoded into binary and stored in the ESP's memory, rather than adding SD card. 
 
-Current enhancements would be to produce a clock which announces the hour betweeen daylight waking time. 
-Addition of RTC module.
-Would not want any buttons on the device, so setup via wifi captive portal? 
-Battery between the various boards must be shared, and rechargeable via USB-C.
+Current enhancements would be to produce a clock which announces the hour betweeen daylight waking time. Currently un-implemented.
+
+# Requrirements 
+Would not want any buttons on the device, so setup via wifi captive portal.
+A single battery between the various boards must be shared, and rechargeable via USB-C, ie no coin cell for the RTC. 
 
 # BOM
 
@@ -16,6 +17,7 @@ Battery between the various boards must be shared, and rechargeable via USB-C.
 | NodeMcu ESP32 WROOM-32 Type C CH340C | ESP32 brains of the operation development Board |
 | MAX98357A                            | Amplifier to drive speaker                      |
 | LM2596                               | DC-DC Buck converter for Battery to 5v          |
+| DS3231 RTC                           | Real Time Clock                                 |
 | 6x Energiser Recharge AA 1300mAh     | Power                                           |
 | 40mm 4ohm 3W speaker                 | Produce output                                  |
 
@@ -31,3 +33,14 @@ The MAX98357A pins are LRC-BCLK-DIN-GAIN-SD-GND-V1N
 | GPIO13    | (5)SD      | RED    | Enable/Shutdown control     |
 | GND       | (6)GND     | ORANGE | Ground                      |
 | VIN       | (7)VIN     | YELLOW | 5V to power amp             |
+
+
+| DS3231 pin | TBC | Colour | Purpose                                      |
+|------------|-----|--------|----------------------------------------------|
+| GND        | --- | TBC    | Ground                                       |
+| VCC        | --- | TBC    | Power to board                               |
+| SDA        | --- | TBC    | I²C data line                                |
+| SCL        | --- | TBC    | I²C clock line                               |
+| SQW        | --- | TBC    | Square-wave / interrupt output               |
+| 32K        | --- | TBC    | 32.768kHz temperature-compensated clock out  |
+
