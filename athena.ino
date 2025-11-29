@@ -22,6 +22,19 @@
 #define PHRASE_INTERVAL 60000  // 1 minute
 
 // ---------------------------------------------------------------------------
+// DEBUG MODE ON OR OFF
+// ---------------------------------------------------------------------------
+#define DEBUG 1  // Set to 0 to disable all debug prints
+
+#if DEBUG
+  #define DBG(x) Serial.println(x)
+  #define DBGF(fmt, ...) Serial.printf(fmt, __VA_ARGS__)
+#else
+  #define DBG(x)
+  #define DBGF(fmt, ...)
+#endif
+
+// ---------------------------------------------------------------------------
 // LOOKUP TABLE OF ALL PHRASES
 // ---------------------------------------------------------------------------
 struct Sound {
@@ -224,6 +237,8 @@ void setup() {
 // ---------------------------------------------------------------------------
 // MAIN LOOP
 // ---------------------------------------------------------------------------
+bool spokenThisMinute = false;
+
 void loop() {
     if (!setupDone) {
         dnsServer.processNextRequest();
@@ -232,18 +247,31 @@ void loop() {
     }
 
     if (!rtcAvailable) {
-        Serial.println("No RTC available!");
+        DBG("No RTC available!");
         delay(2000);
         return;
     }
 
-    unsigned long now = millis();
-    if (now - lastSpeakTime >= PHRASE_INTERVAL) {
-        lastSpeakTime = now;
-        Serial.print("Playing phrase: ");
-        Serial.println(currentSound + 1);
+    DateTime now = rtc.now();
+
+    // Announce at the start of every minute
+    if (now.second() == 0 && !spokenThisMinute) {
+        // Print current time for debugging
+        DBGF("Playing phrase at: %04d-%02d-%02d %02d:%02d:%02d\n",
+        now.year(), now.month(), now.day(),
+        now.hour(), now.minute(), now.second());
+
+
         playSound(currentSound);
         currentSound++;
         if (currentSound >= NUM_SOUNDS) currentSound = 0;
+        spokenThisMinute = true;  // prevent multiple triggers
     }
+
+    if (now.second() != 0) {
+        spokenThisMinute = false;
+    }
+
+    delay(1000); // check once per second
 }
+
