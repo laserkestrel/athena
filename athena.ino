@@ -2,9 +2,13 @@
 #include <cstddef>
 #include <driver/i2s.h>
 #include "audio_data.h"   // Your header with ath01...ath11
+#include <WiFi.h>
+#include <WebServer.h>
+#include <DNSServer.h>
+#include <RTClib.h>
 
 // ---------------------------------------------------------------------------
-// I²S pin definitions (matches your wiring)
+// I²S pin definitions
 // ---------------------------------------------------------------------------
 #define I2S_BCLK 26
 #define I2S_LRC  25
@@ -14,12 +18,11 @@
 // ---------------------------------------------------------------------------
 // AUDIO PLAYBACK SETTINGS
 // ---------------------------------------------------------------------------
-#define SAMPLE_RATE 16000      // Set to 8000 if your WAVs are 8 kHz
-#define PHRASE_INTERVAL 60000  // 60,000 ms = 1 minute
+#define SAMPLE_RATE 16000
+#define PHRASE_INTERVAL 60000  // 1 minute
 
 // ---------------------------------------------------------------------------
-// Lookup table of all phrases
-// (Keep this in the same order they should be played)
+// LOOKUP TABLE OF ALL PHRASES
 // ---------------------------------------------------------------------------
 struct Sound {
     const int16_t* data;
@@ -28,19 +31,19 @@ struct Sound {
 
 Sound sounds[] = {
     { ath01, ath01_len },
-    { ath02, ath02_len },
-    { ath03, ath03_len },
-    { ath04, ath04_len },
-    { ath07, ath07_len },
-    { ath09, ath09_len },
-    { ath11, ath11_len }
+   // { ath02, ath02_len },
+   // { ath03, ath03_len },
+    // { ath04, ath04_len },
+    // { ath07, ath07_len },
+   //  { ath09, ath09_len },
+   //  { ath11, ath11_len }
 };
 
 const int NUM_SOUNDS = sizeof(sounds) / sizeof(Sound);
 int currentSound = 0;
 
 // ---------------------------------------------------------------------------
-// INITIALISE I²S
+// I²S INITIALISATION
 // ---------------------------------------------------------------------------
 void setupI2S() {
     i2s_config_t i2s_config = {
@@ -68,6 +71,9 @@ void setupI2S() {
     i2s_set_pin(I2S_NUM_0, &pin_config);
 }
 
+// ---------------------------------------------------------------------------
+// PLAY AUDIO
+// ---------------------------------------------------------------------------
 void playSound(int index) {
     if (index < 0 || index >= NUM_SOUNDS) return;
 
@@ -78,33 +84,106 @@ void playSound(int index) {
     const size_t CHUNK_SAMPLES = 1024;
     int16_t buffer[CHUNK_SAMPLES];
 
-    // Wake amplifier
     digitalWrite(AMP_SD, HIGH);
-    delay(5); // let amp settle
+    delay(5);
 
     size_t written;
-
-    // Optional short pre-roll silence
     const size_t SILENCE_SAMPLES = 128;
     for (size_t i = 0; i < SILENCE_SAMPLES; i++) buffer[i] = 0;
     i2s_write(I2S_NUM_0, buffer, SILENCE_SAMPLES * sizeof(int16_t), &written, portMAX_DELAY);
 
-    // Play audio in chunks
     for (size_t i = 0; i < samples; i += CHUNK_SAMPLES) {
         size_t chunk = (i + CHUNK_SAMPLES <= samples) ? CHUNK_SAMPLES : (samples - i);
         for (size_t j = 0; j < chunk; j++)
             buffer[j] = pgm_read_word(&soundData[i + j]);
-
         i2s_write(I2S_NUM_0, buffer, chunk * sizeof(int16_t), &written, portMAX_DELAY);
     }
 
-    // Keep amp on to ensure full tail
     delay(10000);
-
-    // Sleep amplifier
     digitalWrite(AMP_SD, LOW);
 }
 
+// ---------------------------------------------------------------------------
+// RTC + WIFI CAPTIVE PORTAL
+// ---------------------------------------------------------------------------
+WebServer server(80);
+DNSServer dnsServer;
+RTC_DS3231 rtc;
+const byte DNS_PORT = 53;
+
+bool setupDone = false;
+bool rtcAvailable = false;
+
+String formatTime(DateTime t) {
+    char buffer[32];
+    sprintf(buffer, "%04d-%02d-%02d %02d:%02d:%02d",
+            t.year(), t.month(), t.day(),
+            t.hour(), t.minute(), t.second());
+    return String(buffer);
+}
+
+const char HTML_PAGE[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESP32 Clock Setup</title>
+<style>
+body { font-family: Arial; display:flex; justify-content:center; align-items:center; height:100vh; background:#f0f0f0; }
+#container { max-width:300px; padding:20px; background:white; border-radius:12px; box-shadow:0 0 10px rgba(0,0,0,0.1); text-align:center; }
+</style>
+</head>
+<body>
+<div id="container">
+<h2>Setting Clock…</h2>
+<p>Please wait</p>
+</div>
+<script>
+window.onload = () => {
+  let ts = Math.floor(Date.now()/1000);
+  fetch("/set?ts=" + ts)
+    .then(() => { document.body.innerHTML = "<h1>✔ Time Saved to RTC</h1><p>You may close this page.</p>"; });
+};
+</script>
+</body>
+</html>
+)rawliteral";
+
+void startCaptivePortal() {
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP("ESP32-Setup", "");
+    delay(300);
+    dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
+
+    server.onNotFound([]() {
+        server.send(200, "text/html", HTML_PAGE);
+    });
+
+    server.on("/set", []() {
+        if (!server.hasArg("ts")) return;
+        time_t ts = server.arg("ts").toInt();
+        Serial.println("\n=== Time Received From Phone ===");
+        Serial.printf("Unix Time: %ld\n", ts);
+        DateTime dt = DateTime(ts);
+        Serial.print("Human Time (UTC): ");
+        Serial.println(formatTime(dt));
+        if (rtcAvailable) {
+            rtc.adjust(dt);
+            Serial.println("RTC Updated.");
+        } else {
+            Serial.println("RTC NOT FOUND — cannot set hardware clock.");
+        }
+        setupDone = true;
+        server.stop();
+        dnsServer.stop();
+        WiFi.softAPdisconnect(true);
+        WiFi.mode(WIFI_STA);
+        server.send(200, "text/plain", "OK");
+        Serial.println("Clock setup complete — Wi-Fi AP disabled.");
+    });
+
+    server.begin();
+}
 
 // ---------------------------------------------------------------------------
 // SETUP
@@ -113,38 +192,58 @@ unsigned long lastSpeakTime = 0;
 
 void setup() {
     Serial.begin(115200);
-
     pinMode(AMP_SD, OUTPUT);
     digitalWrite(AMP_SD, HIGH);
 
     setupI2S();
 
-    // Athena says her first line right away
-    playSound(currentSound);
-    currentSound++;
-    if (currentSound >= NUM_SOUNDS) currentSound = 0;
+    if (rtc.begin()) {
+        rtcAvailable = true;
+        if (!rtc.lostPower()) {
+            Serial.println("RTC already has valid time.");
+            setupDone = true;
+        } else {
+            Serial.println("RTC power lost — needs setup.");
+        }
+    } else {
+        Serial.println("ERROR: RTC not found!");
+    }
 
-    lastSpeakTime = millis();  // next line in 1 minute
+    if (!setupDone) {
+        Serial.println("Entering FIRST-TIME SETUP MODE...");
+        startCaptivePortal();
+    } else {
+        // Athena says first line immediately
+        playSound(currentSound);
+        currentSound++;
+        if (currentSound >= NUM_SOUNDS) currentSound = 0;
+        lastSpeakTime = millis();
+    }
 }
 
 // ---------------------------------------------------------------------------
-// MAIN LOOP — Athena speaks every 1 minute
+// MAIN LOOP
 // ---------------------------------------------------------------------------
 void loop() {
+    if (!setupDone) {
+        dnsServer.processNextRequest();
+        server.handleClient();
+        return;
+    }
+
+    if (!rtcAvailable) {
+        Serial.println("No RTC available!");
+        delay(2000);
+        return;
+    }
 
     unsigned long now = millis();
-    
     if (now - lastSpeakTime >= PHRASE_INTERVAL) {
         lastSpeakTime = now;
-
         Serial.print("Playing phrase: ");
         Serial.println(currentSound + 1);
-
         playSound(currentSound);
-
         currentSound++;
-        if (currentSound >= NUM_SOUNDS) {
-            currentSound = 0; // wrap around
-        }
+        if (currentSound >= NUM_SOUNDS) currentSound = 0;
     }
 }
