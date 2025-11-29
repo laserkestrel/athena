@@ -140,7 +140,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESP32 Clock Setup</title>
+<title>Athena Clock Setup</title>
 <style>
 body { font-family: Arial; display:flex; justify-content:center; align-items:center; height:100vh; background:#f0f0f0; }
 #container { max-width:300px; padding:20px; background:white; border-radius:12px; box-shadow:0 0 10px rgba(0,0,0,0.1); text-align:center; }
@@ -164,7 +164,7 @@ window.onload = () => {
 
 void startCaptivePortal() {
     WiFi.mode(WIFI_AP);
-    WiFi.softAP("ESP32-Setup", "");
+    WiFi.softAP("ATHENA-SETUP", "");
     delay(300);
     dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
 
@@ -187,11 +187,11 @@ void startCaptivePortal() {
             Serial.println("RTC NOT FOUND — cannot set hardware clock.");
         }
         setupDone = true;
+        server.send(200, "text/plain", "OK");
         server.stop();
         dnsServer.stop();
         WiFi.softAPdisconnect(true);
         WiFi.mode(WIFI_STA);
-        server.send(200, "text/plain", "OK");
         Serial.println("Clock setup complete — Wi-Fi AP disabled.");
     });
 
