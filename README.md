@@ -4,10 +4,10 @@ Currently powered by an LM2596 set to output 5v. (input power 6x AA NiMh battery
 
 Wav data is encoded into binary and stored in the ESP's memory, rather than adding SD card. 
 
-Current enhancements would be to produce a clock which announces the hour betweeen daylight waking time. Currently un-implemented.
+Uses captive portal wifi to take the time from the wifi client's device and set the RTC clock up. The client seamlessly disconnects by disabling the esp32's wifi when this step completes. 
 
 # Requrirements 
-Would not want any buttons on the device, so setup via wifi captive portal.
+
 A single battery between the various boards must be shared, and rechargeable via USB-C, ie no coin cell for the RTC. 
 
 # BOM
