@@ -22,25 +22,26 @@ A single battery between the various boards must be shared, and rechargeable via
 | 40mm 4ohm 3W speaker                 | Produce output                                  |
 
 
-The MAX98357A pins are LRC-BCLK-DIN-GAIN-SD-GND-V1N
+# WIRING
 
-| ESP32 pin | MAX pin    | Colour | Purpose                     |
-| --------- | ---------- | ------ | --------------------------- |
-| GPIO25    | (1)LRC     | GREY   | I²S Word Select             |
-| GPIO26    | (2)BCLK    | WHITE  | I²S Bit Clock               |
-| GPIO27    | (3)DIN     | BLACK  | I²S Data Out                |
-| GPIO14    | (4)GAIN    | BROWN  | leave unconnected or ignore |
-| GPIO13    | (5)SD      | RED    | Enable/Shutdown control     |
-| GND       | (6)GND     | ORANGE | Ground                      |
-| VIN       | (7)VIN     | YELLOW | 5V to power amp             |
+| ESP32 pin | Module Pin | Module Type | Cable Colour | Purpose                     |
+| --------- | ---------- | ----------- | ------------ | --------------------------- |
+| Not used  | (1)GND     | DS3231      | BROWN        | Common Ground for RTC       |
+| Not used  | (2)VCC     | DS3231      | RED          | Common Voltage+ for RTC     |
+| GPIO21    | SDA        | DS3231      | BLUE         | I²C data line               |
+| GPIO22    | SCL        | DS3231      | PURPLE       | I²C clock line              | 
+| GPIO25    | (1)LRC     | MAX98357A   | GREY         | I²S Word Select             |
+| GPIO26    | (2)BCLK    | MAX98357A   | WHITE        | I²S Bit Clock               |
+| GPIO27    | (3)DIN     | MAX98357A   | BLACK        | I²S Data Out                |
+| GPIO14    | (4)GAIN    | MAX98357A   | BROWN        | leave unconnected or ignore |
+| GPIO13    | (5)SD      | MAX98357A   | RED          | Enable/Shutdown control     |
+| GND       | (6)GND     | MAX98357A   | ORANGE       | Ground                      |
+| VIN       | (7)VIN     | MAX98357A   | YELLOW       | 5V to power amp             |
 
+# Unused pins info on DS3231
 
 | DS3231 pin | TBC | Colour | Purpose                                      |
 |------------|-----|--------|----------------------------------------------|
-| GND        | --- | TBC    | Ground                                       |
-| VCC        | --- | TBC    | Power to board                               |
-| SDA        | --- | TBC    | I²C data line                                |
-| SCL        | --- | TBC    | I²C clock line                               |
 | SQW        | --- | TBC    | Square-wave / interrupt output               |
 | 32K        | --- | TBC    | 32.768kHz temperature-compensated clock out  |
 
